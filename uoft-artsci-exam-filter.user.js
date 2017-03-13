@@ -40,14 +40,14 @@ if (!storage)
 
 var parseCourses = function (mycoursesstr) {
     var mycourses = {names: [], sections: []};
-    mycoursesstr.split(/[ ,;]/).forEach(function (c) {
-        // merge multiple delimiters
-        if (!c)
-            return;
-        var cspl = c.split(/[\/:]/);
-        if (cspl[1])
-            mycourses.sections[mycourses.names.length] = cspl[1].toUpperCase();
-        mycourses.names.push(cspl[0].toUpperCase());
+    mycoursesstr.split(/[ ,;]+/).forEach(function (c) {
+        // ignore empty courses
+        if (c) {
+            var cspl = c.split(/[\/:]+/);
+            if (cspl[1])
+                mycourses.sections[mycourses.names.length] = cspl[1].toUpperCase();
+            mycourses.names.push(cspl[0].toUpperCase());
+        }
     });
     return mycourses;
 };
