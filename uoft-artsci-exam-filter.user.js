@@ -2,7 +2,7 @@
 // @name          University of Toronto Arts & Science Exam Schedule Filter
 // @namespace     https://alxu.ca/
 // @match         http://www.artsci.utoronto.ca/current/exams/*
-// @version       1.1
+// @version       1.2
 // @grant         none
 // @downloadURL   https://alxu.ca/uoft-artsci-exam-filter.user.js
 // @require       https://www.kryogenix.org/code/browser/sorttable/sorttable.js#sha512=33bdc388d816cab2190ee33918143074a3d1bc8da315b0d6117eb8233d8a7ed51752aa26419296c06120c6faee6053d4589fca2a7590846139d69e84cb600808
@@ -23,8 +23,7 @@
 if (document.title.indexOf("Timetable") === -1)
     return;
 
-// hopefully won't change, these queries are expensive-ish
-var tbl = document.getElementsByClassName("vertical")[0],
+var tbl = document.getElementsByClassName("vertical")[0];
 
 if (!tbl)
     return;
@@ -48,14 +47,13 @@ if (!storage)
 
 var parseCourses = function (mycoursesstr) {
     // ignore leading, trailing, consecutive delimiters
-    var mycourses = mycoursesstr.split(/[ ,;]/).filter(function (v) { return v; }).map(function (c) {
+    return mycoursesstr.split(/[ ,;]+/).filter((v) => v).map(function (c) {
         var cspl = c.split(/[\/:]+/);
         return {
             name: cspl[0].toUpperCase(),
             section: cspl.length > 1 ? cspl[1].toUpperCase() : null
         };
     });
-    return mycourses;
 };
 
 var dofilter = function (myname, mycourses) {
@@ -143,7 +141,7 @@ if (typeof sorttable !== "undefined")
     for (var i = trs.length - 1; i >= 0; i--) {
         var dateEl = trs[i].children[2],
             dateSplit = dateEl.innerHTML.split(" "); // ["MON", "1", "JAN"]
-        dateEl.setAttribute("sorttable_customkey", dateSplit[2] + dateSplit[1]); // "JAN1"
+        dateEl.setAttribute("sorttable_customkey", dateSplit[2] + dateSplit[1] + trs[i].children[3]); // "JAN1AM 9:00 - 12:00"
     }
 
 }());
