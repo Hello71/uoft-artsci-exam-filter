@@ -2,7 +2,7 @@
 // @name          University of Toronto Arts & Science Exam Schedule Filter
 // @namespace     https://alxu.ca/
 // @match         http://www.artsci.utoronto.ca/current/exams/*
-// @version       1.2
+// @version       1.3
 // @grant         none
 // @downloadURL   https://alxu.ca/uoft-artsci-exam-filter.user.js
 // @require       https://www.kryogenix.org/code/browser/sorttable/sorttable.js#sha512=33bdc388d816cab2190ee33918143074a3d1bc8da315b0d6117eb8233d8a7ed51752aa26419296c06120c6faee6053d4589fca2a7590846139d69e84cb600808
@@ -98,10 +98,11 @@ var dofilter = function (myname, mycourses) {
 var ourctnr = document.createElement("div");
 ourctnr.appendChild(document.createTextNode("Filter by name: "));
 
-var makeInput = function (attr, size) {
+var makeInput = function (attr, size, placeholder) {
     var input = document.createElement("input");
     input.type = "text";
     input.size = size;
+    input.placeholder = placeholder;
     if (storage[attr])
         input.value = storage[attr];
     input.addEventListener("input", function () {
@@ -113,16 +114,16 @@ var makeInput = function (attr, size) {
     ourctnr.appendChild(input);
 };
 
-makeInput("name", "4");
+makeInput("name", "5", "SMIT");
 
 ourctnr.appendChild(document.createTextNode(", courses: "));
 
-makeInput("courses", "50");
+makeInput("courses", "50", "ENG10 CO100/101 CLA204/L0101");
 
 ourctnr.appendChild(document.createElement("br"));
-ourctnr.appendChild(document.createTextNode("Courses should be separated by spaces and sections preceded by slash."));
+ourctnr.appendChild(document.createTextNode("For name, you should enter the first few letters of your surname (not your given name, obviously)."));
 ourctnr.appendChild(document.createElement("br"));
-ourctnr.appendChild(document.createTextNode("Example: ABC101 XYZ201/L0301"));
+ourctnr.appendChild(document.createTextNode("Courses should be separated by spaces and sections preceded by slash. You can omit the start or end of a field. For example: entering \"BC10 XYZ201/L0301\" for courses will show only courses containing \"BC10\" as well as section L0301 of course XYZ201."));
 
 tbl.parentNode.insertBefore(ourctnr, tbl);
 
