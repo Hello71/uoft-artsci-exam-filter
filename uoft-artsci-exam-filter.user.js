@@ -2,7 +2,7 @@
 // @name          University of Toronto Arts & Science Exam Schedule Filter
 // @namespace     https://alxu.ca/
 // @match         http://www.artsci.utoronto.ca/current/exams/*
-// @version       1.0
+// @version       1.1
 // @grant         none
 // @downloadURL   https://alxu.ca/uoft-artsci-exam-filter.user.js
 // @require       https://www.kryogenix.org/code/browser/sorttable/sorttable.js#sha512=33bdc388d816cab2190ee33918143074a3d1bc8da315b0d6117eb8233d8a7ed51752aa26419296c06120c6faee6053d4589fca2a7590846139d69e84cb600808
@@ -14,7 +14,7 @@
  *
  * Firefox: Install Greasemonkey: https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/ then (re-)open this file.
  * Chrome: Install Tampermonkey: https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo then (re-)open this file.
- * Note that installing this script directly will also work, but sorting will not be supported, and in addition, on Windows/Mac the script will be automatically and permanently disabled once Chrome restarts.
+ * Note that installing this script directly will also work, but sorting will not be supported, and in addition, on Windows and Mac the script will be automatically and permanently disabled once Chrome restarts.
  */
 
 (function () {
@@ -23,8 +23,16 @@
 if (document.title.indexOf("Timetable") === -1)
     return;
 
+// hopefully won't change, these queries are expensive-ish
 var tbl = document.getElementsByClassName("vertical")[0],
-    trs = tbl.querySelectorAll("tr:not(:first-child)");
+
+if (!tbl)
+    return;
+
+var trs = tbl.querySelectorAll("tr:not(:first-child)");
+
+if (!trs.length)
+    return;
 
 var storage = localStorage.getItem("filterinfo");
 if (storage)
@@ -39,24 +47,21 @@ if (!storage)
     storage = {};
 
 var parseCourses = function (mycoursesstr) {
-    var mycourses = {names: [], sections: []};
-    mycoursesstr.split(/[ ,;]+/).forEach(function (c) {
-        // ignore empty courses
-        if (c) {
-            var cspl = c.split(/[\/:]+/);
-            if (cspl[1])
-                mycourses.sections[mycourses.names.length] = cspl[1].toUpperCase();
-            mycourses.names.push(cspl[0].toUpperCase());
-        }
+    // ignore leading, trailing, consecutive delimiters
+    var mycourses = mycoursesstr.split(/[ ,;]/).filter(function (v) { return v; }).map(function (c) {
+        var cspl = c.split(/[\/:]+/);
+        return {
+            name: cspl[0].toUpperCase(),
+            section: cspl.length > 1 ? cspl[1].toUpperCase() : null
+        };
     });
     return mycourses;
 };
 
-// the meat.
 var dofilter = function (myname, mycourses) {
-    var getCI = function (name) {
-        return mycourses.names.findIndex(function (mycname) {
-            return name.indexOf(mycname) > -1;
+    var getCourse = function (name) {
+        return mycourses.find(function (c) {
+            return c && name.indexOf(c.name) > -1;
         });
     };
 
@@ -65,16 +70,19 @@ var dofilter = function (myname, mycourses) {
             s = ch[1].innerHTML;
 
         // if we don't have any courses, match everything instead of nothing
-        if (mycourses.names.length) {
-            var courseindex = getCI(ch[0].innerHTML);
-            if (courseindex === -1)
+        if (mycourses.length) {
+            var course = getCourse(ch[0].innerHTML);
+            if (!course)
                 return false;
 
-            var l = s.match(/L?[0-9]+/);
-            if (l && mycourses.sections[courseindex] && l[0].indexOf(mycourses.sections[courseindex]) === -1)
-                return false;
+            if (course.section) {
+                var l = s.match(/L?[0-9]+/);
+                if (l && l[0].indexOf(course.section) === -1)
+                    return false;
+            }
         }
 
+        // same with name
         if (myname) {
             var nr = s.match(/([A-Z]+) - ([A-Z]+)/);
             if (nr && (myname < nr[1] || myname > nr[2]))
