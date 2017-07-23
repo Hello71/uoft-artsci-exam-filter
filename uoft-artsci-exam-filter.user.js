@@ -2,7 +2,7 @@
 // @name          University of Toronto Arts & Science Exam Schedule Filter
 // @namespace     https://alxu.ca/
 // @match         http://www.artsci.utoronto.ca/current/exams/*
-// @version       1.3
+// @version       1.4
 // @grant         none
 // @downloadURL   https://alxu.ca/uoft-artsci-exam-filter.user.js
 // @require       https://www.kryogenix.org/code/browser/sorttable/sorttable.js#sha512=33bdc388d816cab2190ee33918143074a3d1bc8da315b0d6117eb8233d8a7ed51752aa26419296c06120c6faee6053d4589fca2a7590846139d69e84cb600808
@@ -45,27 +45,27 @@ if (storage)
 if (!storage)
     storage = {};
 
-var parseCourses = function (mycoursesstr) {
-    // ignore leading, trailing, consecutive delimiters
-    return mycoursesstr.split(/[ ,;]+/).filter((v) => v).map(function (c) {
-        var cspl = c.split(/[\/:]+/);
-        return {
+var parseCourses = (mycoursesstr) => mycoursesstr
+        // ignore leading, trailing, consecutive delimiters
+        .split(/[ ,;]+/).filter((v) => v)
+        .map((c) => c.split(/[\/:]+/))
+        .map((cspl) => ({
             name: cspl[0].toUpperCase(),
             section: cspl.length > 1 ? cspl[1].toUpperCase() : null
-        };
-    });
-};
+        }));
 
 var dofilter = function (myname, mycourses) {
-    var getCourse = function (name) {
-        return mycourses.find(function (c) {
-            return c && name.indexOf(c.name) > -1;
-        });
-    };
+    var getCourse = (name) => mycourses.find((c) => c && name.indexOf(c.name) > -1);
 
     var checkCourse = function (tr) {
         var ch = tr.children,
             s = ch[1].innerHTML;
+
+        if (myname) {
+            var nr = s.match(/([A-Z]+) - ([A-Z]+)/);
+            if (nr && (myname < nr[1] || myname > nr[2]))
+                return false;
+        }
 
         // if we don't have any courses, match everything instead of nothing
         if (mycourses.length) {
@@ -78,13 +78,6 @@ var dofilter = function (myname, mycourses) {
                 if (l && l[0].indexOf(course.section) === -1)
                     return false;
             }
-        }
-
-        // same with name
-        if (myname) {
-            var nr = s.match(/([A-Z]+) - ([A-Z]+)/);
-            if (nr && (myname < nr[1] || myname > nr[2]))
-                return false;
         }
 
         return true;
@@ -114,11 +107,11 @@ var makeInput = function (attr, size, placeholder) {
     ourctnr.appendChild(input);
 };
 
-makeInput("name", "5", "SMIT");
+makeInput("name", "4", "SMIT");
 
 ourctnr.appendChild(document.createTextNode(", courses: "));
 
-makeInput("courses", "50", "ENG10 CO100/101 CLA204/L0101");
+makeInput("courses", "60", "ENG100 ECO100/101 CLA204/L0101");
 
 ourctnr.appendChild(document.createElement("br"));
 ourctnr.appendChild(document.createTextNode("For name, you should enter the first few letters of your surname (not your given name, obviously)."));
@@ -132,17 +125,22 @@ if (storage.name || storage.courses)
         dofilter(storage.name, parseCourses(storage.courses));
 
         if (typeof sorttable !== "undefined") {
+            for (var i = trs.length - 1; i >= 0; i--) {
+                var c = trs[i].children,
+                    dEl = c[2],
+                    dSpl = dEl.innerHTML.split(" ");
+
+                c[2].setAttribute("sorttable_customkey",
+                    ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"].indexOf(dSpl[2]) +
+                    ("00" + dSpl[1]).slice(-2) +
+                    ["AM", "PM", "EV"].indexOf(c[3].innerHTML.split(" ")[0]));
+            }
             sorttable.init();
             sorttable.makeSortable(tbl);
-            sorttable.innerSortFunction.apply(tbl.getElementsByTagName("th")[2], []);
+            sorttable.innerSortFunction
+                .apply(tbl.getElementsByTagName("th")[2], []);
         }
     });
 
-if (typeof sorttable !== "undefined")
-    for (var i = trs.length - 1; i >= 0; i--) {
-        var dateEl = trs[i].children[2],
-            dateSplit = dateEl.innerHTML.split(" "); // ["MON", "1", "JAN"]
-        dateEl.setAttribute("sorttable_customkey", dateSplit[2] + dateSplit[1] + trs[i].children[3]); // "JAN1AM 9:00 - 12:00"
-    }
 
 }());
